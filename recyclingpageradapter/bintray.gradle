@@ -1,0 +1,49 @@
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
+
+group = 'com.zinuzoid.recyclingpageradapter'
+version = '0.1.0'
+
+task generateSourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier 'sources'
+}
+
+task generateJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath()
+            .join(File.pathSeparator))
+}
+
+task generateJavadocsJar(type: Jar, dependsOn: generateJavadocs) {
+    from generateJavadocs.destinationDir
+    classifier 'javadoc'
+}
+
+artifacts {
+    archives generateJavadocsJar
+    archives generateSourcesJar
+}
+
+Properties bintrayProperties = new Properties()
+bintrayProperties.load(project.file('bintray.properties').newDataInputStream())
+bintray {
+    user = bintrayProperties.getProperty('BinTray.user')
+    key = bintrayProperties.getProperty('BinTray.key')
+
+    configurations = ['archives']
+    dryRun = false
+    pkg {
+        repo = 'Android'
+        name = 'com.zinuzoid.recyclingpageradapter'
+
+        websiteUrl = 'https://github.com/zinuzoid/RecyclingPagerAdapter'
+        issueTrackerUrl = 'https://github.com/zinuzoid/RecyclingPagerAdapter/issues'
+        vcsUrl = 'https://github.com/zinuzoid/RecyclingPagerAdapter.git'
+        licenses = ['GPL-3.0']
+        labels = ['android', 'adapter', 'pager', 'recycle']
+    }
+}
+
+
+
