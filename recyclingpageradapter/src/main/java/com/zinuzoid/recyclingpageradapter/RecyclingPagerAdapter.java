@@ -1,5 +1,6 @@
 package com.zinuzoid.recyclingpageradapter;
 
+import android.content.Context;
 import android.support.v4.view.PagerAdapter;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,20 +13,26 @@ import android.widget.AdapterView;
 public abstract class RecyclingPagerAdapter extends PagerAdapter {
 	static final int IGNORE_ITEM_VIEW_TYPE = AdapterView.ITEM_VIEW_TYPE_IGNORE;
 
-	private final RecycleBin recycleBin;
+	private final RecycleBin mRecycleBin;
+	private final Context mContext;
 
-	public RecyclingPagerAdapter() {
-		this(new RecycleBin());
+	public RecyclingPagerAdapter(Context context) {
+		this(context, new RecycleBin());
 	}
 
-	RecyclingPagerAdapter(RecycleBin recycleBin) {
-		this.recycleBin = recycleBin;
+	RecyclingPagerAdapter(Context context, RecycleBin recycleBin) {
+		mContext = context;
+		mRecycleBin = recycleBin;
 		recycleBin.setViewTypeCount(getViewTypeCount());
+	}
+
+	protected Context getContext() {
+		return mContext;
 	}
 
 	@Override
 	public void notifyDataSetChanged() {
-		recycleBin.scrapActiveViews();
+		mRecycleBin.scrapActiveViews();
 		super.notifyDataSetChanged();
 	}
 
@@ -34,7 +41,7 @@ public abstract class RecyclingPagerAdapter extends PagerAdapter {
 		int viewType = getItemViewType(position);
 		View view = null;
 		if(viewType != IGNORE_ITEM_VIEW_TYPE) {
-			view = recycleBin.getScrapView(position, viewType);
+			view = mRecycleBin.getScrapView(position, viewType);
 		}
 		view = getView(position, view, container);
 		container.addView(view);
@@ -47,18 +54,13 @@ public abstract class RecyclingPagerAdapter extends PagerAdapter {
 		container.removeView(view);
 		int viewType = getItemViewType(position);
 		if(viewType != IGNORE_ITEM_VIEW_TYPE) {
-			recycleBin.addScrapView(view, position, viewType);
+			mRecycleBin.addScrapView(view, position, viewType);
 		}
 	}
 
 	@Override
 	public final boolean isViewFromObject(View view, Object object) {
 		return view == object;
-	}
-
-	@Override
-	public int getItemPosition(Object object) {
-		return POSITION_NONE;
 	}
 
 	/**
@@ -99,7 +101,7 @@ public abstract class RecyclingPagerAdapter extends PagerAdapter {
 	 * Get a View that displays the data at the specified position in the data set. You can either
 	 * create a View manually or inflate it from an XML layout file. When the View is inflated, the
 	 * parent View (GridView, ListView...) will apply default layout parameters unless you use
-	 * {@link android.view.LayoutInflater#inflate(int, android.view.ViewGroup, boolean)}
+	 * {@link android.view.LayoutInflater#inflate(int, ViewGroup, boolean)}
 	 * to specify a root view and to prevent attachment to the root.
 	 *
 	 * @param position    The position of the item within the adapter's data set of the item whose view
@@ -113,5 +115,31 @@ public abstract class RecyclingPagerAdapter extends PagerAdapter {
 	 * @param parent      The parent that this view will eventually be attached to
 	 * @return A View corresponding to the data at the specified position.
 	 */
-	public abstract View getView(int position, View convertView, ViewGroup parent);
+	public final View getView(int position, View convertView, ViewGroup parent) {
+		ViewHolder viewHolder;
+		int itemViewType = getItemViewType(position);
+		if(convertView == null) {
+			viewHolder = onCreateViewHolder(itemViewType, parent);
+			viewHolder.itemView.setTag(viewHolder);
+		} else {
+			viewHolder = (ViewHolder) convertView.getTag();
+		}
+		onBindViewHolder(viewHolder, position, itemViewType);
+		return viewHolder.itemView;
+	}
+
+	public abstract ViewHolder onCreateViewHolder(int viewType, ViewGroup container);
+
+	public abstract void onBindViewHolder(ViewHolder viewHolder, int position, int viewType);
+
+	public class ViewHolder {
+
+		public View itemView;
+
+		public ViewHolder(View itemView) {
+			this.itemView = itemView;
+		}
+
+	}
+
 }

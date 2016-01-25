@@ -2,7 +2,7 @@ apply plugin: 'com.jfrog.bintray'
 apply plugin: 'com.github.dcendents.android-maven'
 
 group = 'com.zinuzoid.recyclingpageradapter'
-version = '0.1.0'
+version = '0.1.1'
 
 task generateSourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
